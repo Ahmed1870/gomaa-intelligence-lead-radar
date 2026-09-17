@@ -1,0 +1,21 @@
+services:
+  sales_analysis:
+    label_ar: تحليل المبيعات
+    label_en: Sales Analysis
+    sectors: [retail, ecommerce, restaurants, food, fashion, beauty, wholesale, import_export]
+  customer_rfm:
+    label_ar: تحليل العملاء وRFM
+    label_en: Customer / RFM Analysis
+    sectors: [retail, ecommerce, restaurants, hospitality, travel, beauty, healthcare]
+  data_cleaning:
+    label_ar: تنظيف وتجهيز البيانات
+    label_en: Data Cleaning
+    sectors: [other, professional_services, finance, accounting, healthcare, recruitment, manufacturing]
+  dashboards:
+    label_ar: لوحات المعلومات والتقارير
+    label_en: Dashboards & Reporting
+    sectors: [retail, ecommerce, finance, accounting, HR, human_resources, manufacturing, logistics, healthcare, technology, software, marketing]
+  data_automation:
+    label_ar: جمع البيانات والأتمتة
+    label_en: Data Collection & Automation
+    sectors: [marketing, advertising, recruitment, real_estate, ecommerce, technology, software, logistics, professional_services]

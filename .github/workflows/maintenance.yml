@@ -1,0 +1,36 @@
+name: Radar Maintenance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "40 2 * * *"
+
+concurrency:
+  group: gomaa-radar-database
+  cancel-in-progress: false
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Restore radar database
+        uses: actions/cache@v4
+        with:
+          path: data/jobs.db*
+          key: gomaa-radar-db-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            gomaa-radar-db-${{ github.ref_name }}-
+            gomaa-radar-db-
+      - run: python -m app init-db
+      - run: python -m app maintenance
+      - run: python -m app report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-report-${{ github.run_number }}
+          path: reports/

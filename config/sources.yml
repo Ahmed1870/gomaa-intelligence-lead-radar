@@ -1,0 +1,28 @@
+sources:
+  - name: egypt_business
+    url: https://www.egypt-business.com/company/list
+    countries: [Egypt]
+  - name: yellowpages_egypt
+    url: https://yellowpages.com.eg/en/
+    countries: [Egypt]
+  - name: dalil_imex
+    url: https://www.dalilimex.com/index.php/en/
+    countries: [Egypt]
+  - name: bizmideast
+    url: https://www.bizmideast.com/
+    countries: [Egypt, Saudi Arabia, United Arab Emirates, Qatar, Kuwait, Bahrain, Oman, Jordan, Lebanon, Iraq, Palestine, Yemen, Libya, Tunisia, Algeria, Morocco, Sudan]
+  - name: middle_east_directory
+    url: https://businessdirectorymiddleeast.com/
+    countries: [Egypt, Saudi Arabia, United Arab Emirates, Qatar, Kuwait, Bahrain, Oman, Jordan, Lebanon]
+  - name: arabianlocal
+    url: https://arabianlocal.com/
+    countries: [United Arab Emirates, Saudi Arabia, Qatar, Kuwait, Bahrain, Oman, Jordan]
+  - name: addpages
+    url: https://addpages.company/?lang=en
+    countries: [Egypt, Saudi Arabia, United Arab Emirates, Qatar, Kuwait, Bahrain, Oman, Jordan, Lebanon, Iraq, Palestine, Syria, Yemen, Libya, Tunisia, Algeria, Morocco, Sudan]
+  - name: egypt_yello
+    url: https://www.egyptyello.com/
+    countries: [Egypt]
+  - name: ibaadu
+    url: https://www.ibaadu.com/suppliers/
+    countries: [Egypt, Saudi Arabia, United Arab Emirates, Qatar, Kuwait, Bahrain, Oman, Jordan]

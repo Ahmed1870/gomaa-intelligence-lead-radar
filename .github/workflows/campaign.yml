@@ -1,0 +1,66 @@
+name: Daily Gomaa Intelligence Outreach
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Test without sending
+        required: false
+        type: boolean
+        default: true
+      limit:
+        description: Maximum messages for this run (hard-capped at 40/day)
+        required: false
+        default: "40"
+  schedule:
+    - cron: "10 6 * * *"
+
+# Discovery, campaign and maintenance all use the same database cache.
+# Serializing them prevents two workflows from operating on stale copies at once.
+concurrency:
+  group: gomaa-radar-database
+  cancel-in-progress: false
+
+jobs:
+  campaign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Restore radar database
+        uses: actions/cache@v4
+        with:
+          path: data/jobs.db*
+          key: gomaa-radar-db-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            gomaa-radar-db-${{ github.ref_name }}-
+            gomaa-radar-db-
+      - run: python -m app init-db
+      - name: Run scheduled campaign
+        if: github.event_name == 'schedule'
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          REPLY_TO_EMAIL: ${{ secrets.REPLY_TO_EMAIL }}
+        run: python -m app campaign --limit 40
+      - name: Run manual dry-run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        env:
+          REPLY_TO_EMAIL: ${{ secrets.REPLY_TO_EMAIL }}
+        run: python -m app campaign --dry-run --limit "${{ inputs.limit }}"
+      - name: Run manual live campaign
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == false
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          REPLY_TO_EMAIL: ${{ secrets.REPLY_TO_EMAIL }}
+        run: python -m app campaign --limit "${{ inputs.limit }}"
+      - run: python -m app report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: campaign-report-${{ github.run_number }}
+          path: reports/

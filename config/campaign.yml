@@ -1,0 +1,6 @@
+daily_send_limit: 40
+send_interval_seconds: 180
+send_policy: permissioned
+provider: resend
+from_email_env: FROM_EMAIL
+reply_to_env: REPLY_TO_EMAIL
