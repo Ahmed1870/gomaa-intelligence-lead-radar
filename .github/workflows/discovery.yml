@@ -22,6 +22,9 @@ concurrency:
   group: gomaa-radar-database
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   discovery:
     runs-on: ubuntu-24.04
