@@ -11,6 +11,9 @@ TIMEOUT = 20
 def load(path):
     with open(path, encoding="utf-8") as f: return yaml.safe_load(f)
 
+def runtime_budget_exceeded(started_at, max_runtime_seconds):
+    return (time.monotonic() - started_at) >= max(1, int(max_runtime_seconds))
+
 def robots_allowed(session, url):
     from urllib.robotparser import RobotFileParser
     p=urlparse(url)
@@ -75,7 +78,10 @@ def init_tasks():
                 for sector in sectors:
                     c.execute("INSERT OR IGNORE INTO discovery_tasks(source,country,sector) VALUES(?,?,?)",(s["name"],country,sector))
 
-def discover(limit=120, max_pages=30):
+def discover(limit=120, max_pages=30, max_runtime_seconds=2400):
+    limit = max(1, int(limit))
+    max_pages = max(1, int(max_pages))
+    max_runtime_seconds = max(1, int(max_runtime_seconds))
     init_db(); init_tasks()
     sources={x["name"]:x for x in load("config/sources.yml")["sources"]}
     with connect() as c:
@@ -83,13 +89,20 @@ def discover(limit=120, max_pages=30):
                           ORDER BY updated_at LIMIT ?""",(limit,)).fetchall()
     session=requests.Session()
     total=0
+    started_at = time.monotonic()
     for task in tasks:
+        if runtime_budget_exceeded(started_at, max_runtime_seconds):
+            break
         src=sources.get(task["source"])
         if not src: continue
         pages=0; companies=0
+        budget_exhausted = False
         try:
             queue=[src["url"]]; seen=set()
             while queue and pages<max_pages:
+                if runtime_budget_exceeded(started_at, max_runtime_seconds):
+                    budget_exhausted = True
+                    break
                 u=queue.pop(0)
                 if u in seen: continue
                 seen.add(u)
@@ -104,7 +117,13 @@ def discover(limit=120, max_pages=30):
                 time.sleep(0.7)
             with connect() as c:
                 status = 'done' if pages > 0 else 'retry'
-                c.execute("""UPDATE discovery_tasks SET status=?,attempts=attempts+1,pages=?,companies=?,updated_at=CURRENT_TIMESTAMP,error=? WHERE id=?""",(status,pages,companies,None if pages > 0 else 'No accessible HTML pages',task["id"]))
+                if pages > 0:
+                    error = None
+                elif budget_exhausted:
+                    error = 'Discovery runtime budget exhausted'
+                else:
+                    error = 'No accessible HTML pages'
+                c.execute("""UPDATE discovery_tasks SET status=?,attempts=attempts+1,pages=?,companies=?,updated_at=CURRENT_TIMESTAMP,error=? WHERE id=?""",(status,pages,companies,error,task["id"]))
             total += companies
         except Exception as e:
             with connect() as c:
