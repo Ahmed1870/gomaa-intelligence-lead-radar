@@ -6,7 +6,15 @@ on:
       task_limit:
         description: Tasks to process
         required: false
-        default: "120"
+        default: "60"
+      max_pages:
+        description: Max pages to crawl per task
+        required: false
+        default: "12"
+      max_runtime_seconds:
+        description: Discovery runtime budget in seconds
+        required: false
+        default: "2400"
   schedule:
     - cron: "23 */6 * * *"
 
@@ -16,16 +24,20 @@ concurrency:
 
 jobs:
   discovery:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 55
+    env:
+      DISCOVERY_TASK_LIMIT: "60"
+      DISCOVERY_MAX_PAGES: "12"
+      DISCOVERY_MAX_RUNTIME_SECONDS: "2400"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - name: Restore radar database
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: data/jobs.db*
           key: gomaa-radar-db-${{ github.ref_name }}-${{ github.run_id }}
@@ -33,7 +45,7 @@ jobs:
             gomaa-radar-db-${{ github.ref_name }}-
             gomaa-radar-db-
       - run: python -m app init-db
-      - run: python -m app discover --limit "${{ inputs.task_limit || '120' }}" --max-pages 30
+      - run: python -m app discover --limit "${{ inputs.task_limit || env.DISCOVERY_TASK_LIMIT }}" --max-pages "${{ inputs.max_pages || env.DISCOVERY_MAX_PAGES }}" --max-runtime-seconds "${{ inputs.max_runtime_seconds || env.DISCOVERY_MAX_RUNTIME_SECONDS }}"
       - run: python -m app report
       - uses: actions/upload-artifact@v4
         with:
